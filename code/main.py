@@ -12,8 +12,7 @@ objpoints, imgpoints = [[] for x in range(0,2)] # calibration vaues
 # image global vars
 width = 1280    # hardcode image size to avoid over calculate by video frames
 height = 720
-#  horizon = (height/2)+100
-horizon = (height/2)+90
+horizon = (height/2)+100
 mid_point = (width/2) + 20
 multiplier = 50
 left_margin = 190 - multiplier
@@ -432,6 +431,6 @@ if __name__ == '__main__':
 
     # process video
     white_output = 'output_videos/project_video_2.mp4'
-    clip1 = VideoFileClip("project_video.mp4", audio=False).subclip(15,20)
+    clip1 = VideoFileClip("project_video.mp4", audio=False)
     white_clip = clip1.fl_image(process_image)
     white_clip.write_videofile(white_output, audio=False, preset='ultrafast')
