@@ -24,9 +24,6 @@ Output video is under `output_videos`
 **Gradient Image**
 ![Gradient Image](./output_images/gradient_image.jpg)
 
-**Gradient Image**
-![Gradient Image](./output_images/gradient_image.jpg)
-
 **Top view Image**
 ![Top view Image](./output_images/top_view_image.jpg)
 
