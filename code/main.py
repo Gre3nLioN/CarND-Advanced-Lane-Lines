@@ -8,6 +8,7 @@ from moviepy.editor import VideoFileClip
 # global variables , tweak this to change the end result of the image/video
 left_line = Line()
 right_line = Line()
+objpoints, imgpoints = [[] for x in range(0,2)] # calibration vaues
 # image global vars
 width = 1280    # hardcode image size to avoid over calculate by video frames
 height = 720
@@ -133,7 +134,7 @@ def get_gradient(img, s_thresh=(130,250), sx_thresh=(10, 175), low_threshold=100
     color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary)) * 255
     gray = grayscale(color_binary)
 
-    # extra filter to smoth the output image
+    # extra filter to smoth the output image / not using it right now
     gray[(s_channel <= low_threshold) & (s_channel >= high_threshold)] = 0
     return gray
 
@@ -304,7 +305,7 @@ def fit_polynomial(leftx, lefty, rightx, righty, binary_warped):
     pts = np.hstack((pts_left, pts_right))
 
     # Draw the lane onto the warped blank image
-    #  cv2.fillPoly(binary_warped, np.int_([pts]), (0,255, 0))
+    cv2.fillPoly(binary_warped, np.int_([pts]), (0,255, 0))
 
     # DEBUG : uncomment for debugging
     # Plots the left and right polynomials on the lane lines
@@ -382,22 +383,25 @@ def get_final_image(original, out_img, car_position):
 
 # process each frame/image
 def process_image(img):
-    objpoints, imgpoints = get_calibration(glob.glob('camera_cal/calibration*.jpg'))
+    # calibrate the camera
     calibrated = calibrate_image(img, objpoints, imgpoints)
+    # get the gradient image
     gradient = get_gradient(calibrated, s_thresh=(s_thresh_low, s_thresh_high), sx_thresh=(sx_thresh_low, sx_thresh_high), low_threshold=low_threshold, high_threshold=high_threshold)
     # DEBUG: uncomment to debug regions
     #  debug_reg_lines(gradient)
+    # trim the image to work only on the region of interest
     reg = region_of_interest(gradient)
+    # get top view proyection
     top_view = get_top_view(reg)
 
     #  plot_multiple([top_view, gradient], nrows=1, ncols=2)
     #  plt.imshow(top_view)
     #  plt.show()
-    if (left_line.detected and right_line.detected):
+    if (left_line.detected and right_line.detected): # mostly for video
         binary_warped = np.dstack((top_view, top_view, top_view))
         leftx, lefty, rightx, righty = search_around_poly(binary_warped, left_line, right_line)
         left_curverad, right_curverad = fit_polynomial(leftx, lefty, rightx, righty, binary_warped)
-    else:
+    else: # single iteration = for image
         binary_warped, leftx_base, rightx_base = get_histogram_data(top_view)
         leftx, lefty, rightx, righty = find_lane_pixels(binary_warped, leftx_base, rightx_base)
         left_curverad, right_curverad = fit_polynomial(leftx, lefty, rightx, righty, binary_warped)
@@ -407,22 +411,27 @@ def process_image(img):
     # calculate car position from the lines
     car_position = right_line.line_base_pos - left_line.line_base_pos
 
+    # plot the results on the image
     final_image = get_final_image(calibrated, binary_warped, car_position)
 
     return final_image
 
 if __name__ == '__main__':
-    images = sorted(glob.glob('test_images/test*.jpg'))
-    #  images = sorted(glob.glob('test_images/straight_lines*.jpg'))
-    img_name = images[5]
-    print(img_name)
-    output_img = process_image(cv2.imread(img_name))
-    #  cv2.imwrite(f'output_images/{img_name.split("/")[-1]}', output_img)
+    # get camera calibration
+    objpoints, imgpoints = get_calibration(glob.glob('camera_cal/calibration*.jpg'))
+
+    # process images
+    #  images = sorted(glob.glob('test_images/test*.jpg'))
+    #  #  images = sorted(glob.glob('test_images/straight_lines*.jpg'))
+    #  img_name = images[5]
+    #  print(img_name)
+    #  output_img = process_image(cv2.imread(img_name))
+    #  #  cv2.imwrite(f'output_images/{img_name.split("/")[-1]}', output_img)
     #  plt.imshow(output_img)
     #  plt.show()
 
-    #  white_output = 'output_videos/project_video.mp4'
-    #  #  clip1 = VideoFileClip("project_video.mp4", audio=False).subclip(15,20)
-    #  clip1 = VideoFileClip("project_video.mp4", audio=False)
-    #  white_clip = clip1.fl_image(process_image)
-    #  white_clip.write_videofile(white_output, audio=False, preset='ultrafast')
+    # process video
+    white_output = 'output_videos/project_video_2.mp4'
+    clip1 = VideoFileClip("project_video.mp4", audio=False).subclip(15,20)
+    white_clip = clip1.fl_image(process_image)
+    white_clip.write_videofile(white_output, audio=False, preset='ultrafast')
