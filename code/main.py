@@ -12,14 +12,14 @@ objpoints, imgpoints = [[] for x in range(0,2)] # calibration vaues
 # image global vars
 width = 1280    # hardcode image size to avoid over calculate by video frames
 height = 720
-horizon = (height/2)+100
+horizon = (height/2)+ 90
 mid_point = (width/2) + 20
 multiplier = 50
 left_margin = 190 - multiplier
 right_margin = width - 160  + multiplier
-finish = height
-mid_point_left = 63 + 10
-mid_point_right = 65 + 10
+finish = height - 50
+mid_point_left = 73 + 5
+mid_point_right = 75 + 5
 margin = 100
 #  # straight lines
 #  left_margin = 190
@@ -33,9 +33,9 @@ margin = 100
 #  margin = 100
 
 # filter global vars
-s_thresh_low = 130
+s_thresh_low = 80
 s_thresh_high = 250
-sx_thresh_low = 40
+sx_thresh_low = 20
 sx_thresh_high = 175
 # extra filters added to get a cleaner ourput lines
 low_threshold = 0
@@ -405,8 +405,8 @@ def process_image(img):
         leftx, lefty, rightx, righty = find_lane_pixels(binary_warped, leftx_base, rightx_base)
         left_curverad, right_curverad = fit_polynomial(leftx, lefty, rightx, righty, binary_warped)
     # update lines
-    left_line.update(leftx, lefty, left_curverad, abs(top_view.shape[1]/2 - np.average(leftx)))
-    right_line.update(rightx, righty, right_curverad, abs(top_view.shape[1]/2 - np.average(rightx)))
+    left_line.update(leftx, lefty, left_curverad, abs(calibrated.shape[1]/2))
+    right_line.update(rightx, righty, right_curverad, abs(calibrated.shape[1]/2))
     # calculate car position from the lines
     car_position = right_line.line_base_pos - left_line.line_base_pos
 
@@ -430,7 +430,8 @@ if __name__ == '__main__':
     #  plt.show()
 
     # process video
-    white_output = 'output_videos/project_video_2.mp4'
+    white_output = 'output_videos/project_video.mp4'
     clip1 = VideoFileClip("project_video.mp4", audio=False)
+    #  clip1 = VideoFileClip("project_video.mp4", audio=False).subclip(37,43)
     white_clip = clip1.fl_image(process_image)
     white_clip.write_videofile(white_output, audio=False, preset='ultrafast')

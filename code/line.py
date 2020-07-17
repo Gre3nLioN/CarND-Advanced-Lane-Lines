@@ -26,25 +26,25 @@ class Line():
         # all radius_of_curvature
         self.all_radius_of_curvature = []
 
-    def update(self, x, y, curvature, dist_middle):
+    def update(self, x, y, curvature, img_size):
         # less diference than 0.5 or first element
         if (np.mean(self.best_fit - np.polyfit(y, x, 2), axis=0) < 0.5 or len(self.allx) == 0):
             self.diffs = self.best_fit - np.polyfit(y, x, 2)
             self.detected = True
             self.recent_xfitted = x
-            self.best_fit = np.average([self.best_fit, np.polyfit(y, x, 2)], axis=0)
+            self.ally = np.concatenate((self.ally, y), axis=0)
+            self.allx = np.concatenate((self.allx, x), axis=0)
+            self.best_fit = np.polyfit(self.ally, self.allx, 2)
             self.current_fit = np.polyfit(y, x, 2)
             self.radius_of_curvature = curvature
-            np.concatenate((self.ally, y), axis=None)
-            np.concatenate((self.allx, x), axis=None)
             self.bestx = np.average(self.allx, axis=0)
             self.all_radius_of_curvature.append(curvature)
-            self.line_base_pos = dist_middle
+            self.line_base_pos = abs(img_size - self.bestx)
         else:
             self.detected = False
 
     def get_average_curvature(self):
         if (len(self.all_radius_of_curvature) > 1):
-            return np.average(self.all_radius_of_curvature[-60:], axis=0)
+            return np.average(self.all_radius_of_curvature[-30:], axis=0)
         else:
             return self.all_radius_of_curvature[-1]
